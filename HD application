@@ -1,0 +1,206 @@
+--local script inside sword
+local uis = game:GetService("UserInputService")
+local plr = game.Players.LocalPlayer
+local cd=false
+local cdb = false
+repeat wait() until plr.av 
+local av = plr.av
+local blacklist = {"a"}
+local anims = {
+	"rbxassetid://12608914752",
+	"rbxassetid://12611808142"
+}
+local hitbox = script.Parent.hitbox
+
+local mouse = plr:GetMouse()
+
+local tool = script.Parent
+local anim = Instance.new("Animation")
+anim.AnimationId = "rbxassetid://12619793295" 
+local track
+
+script.Parent.Activated:Connect(function()
+		--local hitbox = script.Parent.fhitbox:Clone()
+	--script.Parent.Value.Value = true
+	if av.Value == true then
+		script.Parent.donothit.Value = "a"
+		if cd == false then
+			cd = true
+			game.ReplicatedStorage.Attack:FireServer()
+			game.ReplicatedStorage.PlaySound:FireServer(game.SoundService.Swooshes:GetChildren()[math.random(1,2)])
+			local anim = Instance.new("Animation")
+			anim.AnimationId = anims[math.random(1,#anims)]
+			plr.Character.Humanoid.Animator:LoadAnimation(anim):Play()
+			wait(1.2)
+			cd = false
+			script.Parent.donothit.Value = "a"
+		end
+		--script.Parent.Value.Value = false
+		--[[hitbox.Touched:Connect(function(hit)
+			local hum = hit.Parent:FindFirstChildWhichIsA("Humanoid")
+			if hum ~= nil then
+				local asdf = false
+				if game.Players:FindFirstChild(hum.Parent.Name).av.Value == false then
+					for i,v in pairs(blacklist) do
+						if hum.Parent.Name == v then
+							asdf = true
+						end
+					end
+					if asdf == false then
+						game.ReplicatedStorage.Stunned:FireServer()
+						table.insert(blacklist,hum.Parent.Name)
+						local anim= Instance.new("Animation")
+						anim.AnimationId = "rbxassetid://12619314890"
+						for i,v in pairs(plr.Character.Humanoid:GetPlayingAnimationTracks()) do v:Stop() end
+						local stunfx = plr.Character.Humanoid.Animator:LoadAnimation(anim)
+						stunfx:Play()
+						wait(.5)
+						stunfx:Stop()
+						blacklist = {"a"}
+					end
+				end
+			end
+		end)]]
+		wait(.2)
+	end
+end)
+
+	game.ReplicatedStorage.Damaged.OnClientEvent:Connect(function()
+	game.ReplicatedStorage.PlaySound:FireServer(game.SoundService.Hits:GetChildren()[math.random(1,6)])
+end)
+
+uis.InputBegan:Connect(function(key)
+	if key.KeyCode == Enum.KeyCode.F and cdb == false then
+		cdb = true
+		game.ReplicatedStorage.Block:FireServer()
+		wait(10)
+		cdb = false
+	end
+end)
+
+local rdb = false
+
+uis.InputBegan:Connect(function(key)
+	if key.KeyCode == Enum.KeyCode.R and rdb == false then
+		rdb = true
+		game.ReplicatedStorage.Roll:FireServer()
+		wait(5)
+		rdb = false
+	end
+end)
+--[[game["Run Service"].RenderStepped:Connect(function()
+	print(script.Parent.Value.Value)
+end)]]
+
+--server script inside sword
+
+
+print("safd")
+local uis = game.UserInputService
+local hitbox = script.Parent.hitbox
+local blacklist = {"a"}
+
+	hitbox.Touched:Connect(function(hit)
+		local donothit = script.Parent.donothit.Value
+		local hum = hit.Parent:FindFirstChildWhichIsA("Humanoid")
+		local asdf = false
+		if hum ~= nil then
+			if game.Players:FindFirstChild(hum.Parent.Name).av.Value == true then
+				for i,v in pairs(blacklist) do
+					if hum.Parent.Name == v then
+						asdf = true
+					end
+				end
+				if asdf == false then
+					hum:TakeDamage(52)
+					--hitbox:Destroy()
+					game.ReplicatedStorage.Damaged:FireAllClients()
+					script.Parent.donothit.Value = hum.Parent.Name
+					table.insert(blacklist,hum.Parent.Name)
+					wait(.5)
+					script.Parent.donothit.Value = "a"
+					blacklist = {"a"}
+				end
+			end
+		end
+	end)
+
+--remotes handler
+
+game.Players.PlayerAdded:Connect(function(plr)	
+	repeat wait() until plr.Character
+	local av = Instance.new("BoolValue",plr)
+	av.Value = true
+	av.Name = "av"
+	while plr.Character:FindFirstChild("BlockFx") == nil do
+		local bl = game.ReplicatedStorage.BlockFx:Clone()
+		bl.Parent = plr.Character
+		bl.Position = plr.Character.HumanoidRootPart.Position
+		local weldd = Instance.new("Weld", plr.Character.BlockFx)
+		weldd.Part0 = weldd.Parent
+		weldd.Part1 = plr.Character.HumanoidRootPart
+		bl.Transparency = 1
+	end
+end)
+
+game.ReplicatedStorage.Attack.OnServerEvent:Connect(function(plr)
+	local sword  = plr.Character:FindFirstChildWhichIsA("Tool")
+	sword.hitbox.CanTouch = true
+	wait(.5)
+	if sword ~= nil and sword:FindFirstChild("hitbox") ~= nil then
+		sword.hitbox.CanTouch = false
+	end
+end)
+
+game.ReplicatedStorage.PlaySound.OnServerEvent:Connect(function(plr,a)
+	local sound = a:Clone()
+	local pitch = Instance.new("PitchShiftSoundEffect",sound)
+	local sword  = plr.Character:FindFirstChildWhichIsA("Tool")
+	pitch.Octave = math.random(1,1.4)
+	sound.Parent = sword
+	sound:Play()
+	repeat wait() until sound.IsPlaying == false
+	sound:Destroy()
+end)
+
+game.ReplicatedStorage.Block.OnServerEvent:Connect(function(plr)
+	plr.av.Value = false
+	while plr.Character:FindFirstChild("BlockFx") == nil do
+		local bl = game.ReplicatedStorage.BlockFx:Clone()
+		bl.Parent = plr.Character
+		bl.Position = plr.Character.HumanoidRootPart.Position
+		local weldd = Instance.new("Weld", plr.Character.BlockFx)
+		weldd.Part0 = weldd.Parent
+		weldd.Part1 = plr.Character.HumanoidRootPart
+		bl.Transparency = 1
+	end
+	plr.Character.BlockFx.Transparency = 0
+	local anim = Instance.new("Animation")
+	plr.Character.HumanoidRootPart.Anchored = true
+	plr.Character.BlockFx.Anchored = true
+	anim.AnimationId = "rbxassetid://12610554856"
+	plr.Character.Humanoid.Animator:LoadAnimation(anim):Play()
+	wait(1)
+	plr.av.Value = true
+	plr.Character.HumanoidRootPart.Anchored = false
+	plr.Character.BlockFx.Anchored = false
+	plr.Character.BlockFx.Transparency = 1
+end)
+
+game.ReplicatedStorage.Stunned.OnServerEvent:Connect(function(plr)
+	if plr.Character:FindFirstChild("Tool") ~= nil then
+		plr.Character:FindFirstChild("Tool"):Destroy()
+	end
+	plr.Character.HumanoidRootPart.Anchored = true
+	wait(2)
+	game.StarterPack.Tool:Clone().Parent = plr.Backpack
+	plr.Character.HumanoidRootPart.Anchored = false
+end)
+
+game.ReplicatedStorage.Roll.OnServerEvent:Connect(function(plr)
+	local bv = Instance.new("BodyVelocity",plr.Character.HumanoidRootPart)
+	bv.P = 1250
+	bv.MaxForce = Vector3.new(math.huge,math.huge,math.huge)
+	bv.Velocity = plr.Character.HumanoidRootPart.CFrame.LookVector*50
+	game.Debris:AddItem(bv,0.2)
+end)
